@@ -1,0 +1,168 @@
+import sys
+from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
+                           QHBoxLayout, QLabel, QPushButton, QComboBox, 
+                           QFileDialog, QProgressBar, QMessageBox)
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont
+from excel_processor import ExcelProcessor
+
+class BirthdayPPTApp(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+        
+    def initUI(self):
+        self.setWindowTitle('생일 PPT 생성기')
+        self.setFixedSize(500, 400)
+        
+        # 메인 위젯 및 레이아웃 설정
+        main_widget = QWidget()
+        self.setCentralWidget(main_widget)
+        layout = QVBoxLayout()
+        main_widget.setLayout(layout)
+        
+        # 제목
+        title_label = QLabel('생일 PPT 생성기')
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title_font = QFont()
+        title_font.setPointSize(16)
+        title_font.setBold(True)
+        title_label.setFont(title_font)
+        layout.addWidget(title_label)
+        
+        # 구분선 추가
+        line = QLabel()
+        line.setFrameStyle(QLabel.Shape.Box | QLabel.Shadow.Plain)
+        line.setFixedHeight(2)
+        layout.addWidget(line)
+        layout.addSpacing(20)
+        
+        # 1. 엑셀 파일 선택
+        excel_group = QWidget()
+        excel_layout = QHBoxLayout()
+        excel_group.setLayout(excel_layout)
+        
+        self.excel_path_label = QLabel('선택된 파일 없음')
+        self.excel_path_label.setStyleSheet('color: gray')
+        excel_button = QPushButton('엑셀 파일 선택')
+        excel_button.clicked.connect(self.select_excel)
+        excel_layout.addWidget(QLabel('1. 엑셀 파일:'))
+        excel_layout.addWidget(self.excel_path_label, stretch=1)
+        excel_layout.addWidget(excel_button)
+        self.excel_path_label.setWordWrap(True)
+        layout.addWidget(excel_group)
+        
+        # 2. 월 선택
+        month_group = QWidget()
+        month_layout = QHBoxLayout()
+        month_group.setLayout(month_layout)
+        
+        self.month_combo = QComboBox()
+        self.month_combo.addItems([f'{i}월' for i in range(1, 13)])
+        month_layout.addWidget(QLabel('2. 월 선택:'))
+        month_layout.addWidget(self.month_combo)
+        month_layout.addStretch()
+        layout.addWidget(month_group)
+        
+        # 3. PPT 저장 위치
+        save_group = QWidget()
+        save_layout = QHBoxLayout()
+        save_group.setLayout(save_layout)
+        
+        self.save_path_label = QLabel('선택된 경로 없음')
+        self.save_path_label.setStyleSheet('color: gray')
+        save_button = QPushButton('저장 위치 선택')
+        save_button.clicked.connect(self.select_save_path)
+        save_layout.addWidget(QLabel('3. 저장 위치:'))
+        save_layout.addWidget(self.save_path_label, stretch=1)
+        save_layout.addWidget(save_button)
+        self.save_path_label.setWordWrap(True)
+        layout.addWidget(save_group)
+        
+        layout.addSpacing(20)
+        
+        # 진행 상태 바
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setFixedHeight(30)
+        layout.addWidget(self.progress_bar)
+        
+        # 생성 버튼
+        generate_button = QPushButton('PPT 생성하기')
+        generate_button.setFixedHeight(50)
+        generate_button.clicked.connect(self.generate_ppt)
+        layout.addWidget(generate_button)
+        
+        # 상태 메시지
+        self.status_label = QLabel('파일을 선택해주세요')
+        self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.status_label)
+        
+    def select_excel(self):
+        file_name, _ = QFileDialog.getOpenFileName(
+            self,
+            "엑셀 파일 선택",
+            "",
+            "Excel Files (*.xlsx *.xls)"
+        )
+        if file_name:
+            self.excel_path_label.setText(file_name)
+            self.excel_path_label.setStyleSheet('color: black')
+            self.status_label.setText(f'엑셀 파일이 선택되었습니다: {file_name}')
+            
+    def select_save_path(self):
+        folder_path = QFileDialog.getExistingDirectory(
+            self,
+            "PPT 저장 위치 선택"
+        )
+        if folder_path:
+            self.save_path_label.setText(folder_path)
+            self.save_path_label.setStyleSheet('color: black')
+            self.status_label.setText(f'저장 위치가 선택되었습니다: {folder_path}')
+            
+    def generate_ppt(self):
+        # 입력 검증
+        if self.excel_path_label.text() == '선택된 파일 없음':
+            QMessageBox.warning(self, '경고', '엑셀 파일을 선택해주세요.')
+            return
+        if self.save_path_label.text() == '선택된 경로 없음':
+            QMessageBox.warning(self, '경고', '저장 위치를 선택해주세요.')
+            return
+        
+        # 엑셀 파일 처리
+        self.status_label.setText('엑셀 파일 읽는 중...')
+        self.progress_bar.setValue(10)
+        
+        excel_processor = ExcelProcessor()
+        success, message = excel_processor.read_excel(self.excel_path_label.text())
+        
+        if not success:
+            QMessageBox.warning(self, '오류', message)
+            self.status_label.setText('엑셀 파일 처리 실패')
+            self.progress_bar.setValue(0)
+            return
+            
+        # 선택된 월의 생일자 목록 가져오기
+        selected_month = int(self.month_combo.currentText().replace('월', ''))
+        birthday_list = excel_processor.get_birthdays_by_month(selected_month)
+        
+        if not birthday_list:
+            QMessageBox.information(self, '알림', f'{selected_month}월 생일자가 없습니다.')
+            self.status_label.setText('생일자 없음')
+            self.progress_bar.setValue(0)
+            return
+            
+        # 생일자 목록 출력 (테스트용)
+        print(f"{selected_month}월 생일자 목록:")
+        for person in birthday_list:
+            print(f"이름: {person['이름']}, 성별: {person['성별']}, "
+                  f"생일: {person['생년월일']}, 나이: {person['나이']}")
+        
+        # PPT 생성 로직은 Sprint 2에서 구현
+        self.status_label.setText('PPT 생성 준비 완료')
+        self.progress_bar.setValue(100)
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    ex = BirthdayPPTApp()
+    ex.show()
+    sys.exit(app.exec())
