@@ -208,6 +208,7 @@ class BirthdayPPTApp(QMainWindow):
         self.status_label.setText('PPT 생성 중...')
         self.progress_bar.setValue(50)
         
+        # 기본 폰트: Maplestory OTF
         ppt_generator = PPTGenerator()
         success, message = ppt_generator.generate_ppt(
             excel_processor.detected_month,

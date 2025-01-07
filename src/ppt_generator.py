@@ -10,30 +10,28 @@ class PPTGeneratorError(Exception):
     pass
 
 class PPTGenerator:
-    def __init__(self):
+    def __init__(self, font_name="Maplestory OTF"):
+        # 템플릿 파일 경로 설정 (실행 파일 기준 상대 경로)
         current_dir = os.path.dirname(os.path.abspath(__file__))
         self.template_path = os.path.join(current_dir, '..', 'resources', 'templates', 'template.pptx')
         
         if not os.path.exists(self.template_path):
             raise PPTGeneratorError(f"템플릿 파일을 찾을 수 없습니다: {self.template_path}")
             
+        # 기본 폰트 설정
+        self.font_name = font_name
+            
+        # 템플릿 로드
         try:
             self.prs = Presentation(self.template_path)
-            # 템플릿 구조 출력
-            print(f"템플릿 슬라이드 수: {len(self.prs.slides)}")
-            for idx, slide in enumerate(self.prs.slides):
-                print(f"\n슬라이드 {idx + 1} 분석:")
-                print(f"- 레이아웃: {slide.slide_layout.name}")
-                print("- 도형 목록:")
-                for shape_idx, shape in enumerate(slide.shapes):
-                    print(f"  도형 {shape_idx + 1}:")
-                    print(f"    유형: {shape.shape_type}")
-                    if hasattr(shape, 'name'):
-                        print(f"    이름: {shape.name}")
-                    if shape.has_text_frame:
-                        print(f"    텍스트: {shape.text}")
+            if len(self.prs.slides) < 2:
+                raise PPTGeneratorError("템플릿에는 최소 2개의 슬라이드가 필요합니다")
         except Exception as e:
-            raise PPTGeneratorError(f"템플릿 분석 실패: {str(e)}")
+            raise PPTGeneratorError(f"템플릿 파일 로드 실패: {str(e)}")
+
+    def set_font(self, font_name: str) -> None:
+        """폰트 변경"""
+        self.font_name = font_name
 
     def create_birthday_slide(self, person: Dict) -> None:
         """생일자 슬라이드 생성"""
@@ -102,7 +100,7 @@ class PPTGenerator:
                                         orig_font = orig_run.font
                                         
                                         # 기본 폰트 설정
-                                        new_font.name = "Maplestory OTF"
+                                        new_font.name = self.font_name
                                         
                                         # 크기 복사
                                         if orig_font.size is not None:
@@ -171,7 +169,8 @@ class PPTGenerator:
                                 new_font = new_run.font
                                 
                                 # 기본 폰트 설정
-                                new_font.name = "Maplestory OTF"
+                                # new_font.name = "Maplestory OTF"
+                                new_font.name = self.font_name
                                 
                                 # 크기 복사
                                 if original_font.size is not None:
