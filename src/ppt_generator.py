@@ -63,30 +63,78 @@ class PPTGenerator:
                         )
                         
                         if shape.has_text_frame and shape.text:
-                            # 텍스트와 서식 복사
-                            text_frame = textbox.text_frame
-                            text_frame.text = shape.text_frame.text
+                            # 원본 텍스트프레임과 새 텍스트프레임
+                            orig_text_frame = shape.text_frame
+                            new_text_frame = textbox.text_frame
                             
-                            # 생일자 정보로 텍스트 교체
-                            birth_date = datetime.strptime(person['생년월일'], '%Y-%m-%d')
-                            text = text_frame.text
-                            text = text.replace("{name}", person['이름'])
-                            text = text.replace("{month}", str(birth_date.month))
-                            text = text.replace("{day}", str(birth_date.day))
-                            text_frame.text = text
+                            # 텍스트프레임 속성 복사
+                            new_text_frame.word_wrap = orig_text_frame.word_wrap
                             
-                            # 폰트 복사 (선택적)
-                            if len(text_frame.paragraphs) > 0:
-                                p = text_frame.paragraphs[0]
-                                if len(p.runs) > 0:
-                                    font = p.runs[0].font
-                                    font.name = '맑은 고딕'  # 기본 폰트 지정
-                                    font.size = shape.text_frame.paragraphs[0].runs[0].font.size
+                            # 단락별로 복사
+                            for i, orig_paragraph in enumerate(orig_text_frame.paragraphs):
+                                if i == 0:
+                                    new_paragraph = new_text_frame.paragraphs[0]
+                                else:
+                                    new_paragraph = new_text_frame.add_paragraph()
+                                
+                                # 단락 속성 복사
+                                new_paragraph.alignment = orig_paragraph.alignment
+                                new_paragraph.level = orig_paragraph.level
+                                
+                                # 텍스트 복사 및 치환
+                                text = orig_paragraph.text
+                                if text:
+                                    birth_date = datetime.strptime(person['생년월일'], '%Y-%m-%d')
+                                    text = text.replace("{name}", person['이름'])
+                                    text = text.replace("{month}", str(birth_date.month))
+                                    text = text.replace("{day}", str(birth_date.day))
                                     
+                                    new_paragraph.text = text
+                                    
+                                    # 런(서식 단위)별로 복사
+                                    if len(orig_paragraph.runs) > 0:
+                                        orig_run = orig_paragraph.runs[0]
+                                        new_run = new_paragraph.runs[0]
+                                        
+                                        # 폰트 속성 복사
+                                        new_font = new_run.font
+                                        orig_font = orig_run.font
+                                        
+                                        # 기본 폰트 설정
+                                        new_font.name = "Maplestory OTF"
+                                        
+                                        # 크기 복사
+                                        if orig_font.size is not None:
+                                            new_font.size = orig_font.size
+                                        
+                                        # 색상 복사 (테마 색상 처리)
+                                        try:
+                                            if hasattr(orig_font.color, 'rgb'):
+                                                new_font.color.rgb = orig_font.color.rgb
+                                            elif hasattr(orig_font.color, 'theme_color'):
+                                                new_font.color.theme_color = orig_font.color.theme_color
+                                        except Exception as color_error:
+                                            print(f"색상 복사 중 오류 (무시됨): {str(color_error)}")
+                                        
+                                        # 기타 폰트 속성 복사
+                                        new_font.bold = orig_font.bold
+                                        new_font.italic = orig_font.italic
+                                        new_font.underline = orig_font.underline
+                                        
+                                        print(f"폰트 정보 - {text}:")
+                                        print(f"- 이름: {new_font.name}")
+                                        print(f"- 크기: {new_font.size}")
+                                        if hasattr(new_font.color, 'theme_color'):
+                                            print(f"- 색상: Theme Color")
+                                        elif hasattr(new_font.color, 'rgb'):
+                                            print(f"- 색상: RGB")
+                            
+            print(f"{person['이름']}의 슬라이드 생성 완료")
+                            
         except Exception as e:
             print(f"슬라이드 생성 중 오류: {str(e)}")
             raise PPTGeneratorError(f"슬라이드 생성 오류: {str(e)}")
-
+        
     def create_title_slide(self, month: int) -> None:
         try:
             print(f"\n타이틀 슬라이드 수정 (월: {month})")
