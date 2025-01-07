@@ -90,19 +90,7 @@ class BirthdayPPTApp(QMainWindow):
         self.excel_path_label.setWordWrap(True)
         layout.addWidget(excel_group)
         
-        # 2. 월 선택
-        month_group = QWidget()
-        month_layout = QHBoxLayout()
-        month_group.setLayout(month_layout)
-        
-        self.month_combo = QComboBox()
-        self.month_combo.addItems([f'{i}월' for i in range(1, 13)])
-        month_layout.addWidget(QLabel('2. 월 선택:'))
-        month_layout.addWidget(self.month_combo)
-        month_layout.addStretch()
-        layout.addWidget(month_group)
-        
-        # 3. PPT 저장 위치
+        # 2. PPT 저장 위치
         save_group = QWidget()
         save_layout = QHBoxLayout()
         save_group.setLayout(save_layout)
@@ -111,7 +99,7 @@ class BirthdayPPTApp(QMainWindow):
         self.save_path_label.setStyleSheet('color: #888888; background-color: white; padding: 5px; border: 1px solid #cccccc; border-radius: 3px;')
         save_button = QPushButton('저장 위치 선택')
         save_button.clicked.connect(self.select_save_path)
-        save_layout.addWidget(QLabel('3. 저장 위치:'))
+        save_layout.addWidget(QLabel('2. 저장 위치:'))
         save_layout.addWidget(self.save_path_label, stretch=1)
         save_layout.addWidget(save_button)
         self.save_path_label.setWordWrap(True)
@@ -179,13 +167,12 @@ class BirthdayPPTApp(QMainWindow):
             self.progress_bar.setValue(0)
             return
             
-        # 선택된 월의 생일자 목록 가져오기
-        selected_month = int(self.month_combo.currentText().replace('월', ''))
-        birthday_list = excel_processor.get_birthdays_by_month(selected_month)
+        # 생일자 데이터 확인
+        birthday_list = excel_processor.get_all_birthdays()
         
         if not birthday_list:
-            QMessageBox.information(self, '알림', f'{selected_month}월 생일자가 없습니다.')
-            self.status_label.setText('생일자 없음')
+            QMessageBox.information(self, '알림', '생일자 데이터가 없습니다.')
+            self.status_label.setText('데이터 없음')
             self.progress_bar.setValue(0)
             return
             

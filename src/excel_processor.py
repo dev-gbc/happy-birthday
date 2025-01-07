@@ -47,22 +47,21 @@ class ExcelProcessor:
         except Exception as e:
             return False, f"파일 읽기 오류: {str(e)}"
     
-    def get_birthdays_by_month(self, month: int) -> List[Dict]:
-        """특정 월의 생일자 목록 반환"""
+    def get_all_birthdays(self) -> List[Dict]:
+        """전체 생일자 목록 반환"""
         if self.df is None:
             return []
         
-        # 해당 월의 생일자만 필터링
-        monthly_df = self.df[self.df['생년월일'].dt.month == month].copy()
-        
         # 결과를 리스트로 변환
         birthday_list = []
-        for _, row in monthly_df.iterrows():
+        for _, row in self.df.iterrows():
             birthday_list.append({
                 '이름': row['이름'],
                 '성별': row['성별'],
                 '생년월일': row['생년월일'].strftime('%Y-%m-%d'),
                 '나이': datetime.now().year - row['생년월일'].year + 1
             })
-            
+        
+        # 생일 날짜순으로 정렬
+        birthday_list.sort(key=lambda x: x['생년월일'])
         return birthday_list
