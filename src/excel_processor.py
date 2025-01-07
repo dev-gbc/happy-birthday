@@ -7,6 +7,7 @@ class ExcelProcessor:
     
     def __init__(self):
         self.df = None
+        self.detected_month = None
         
     def validate_columns(self, df: pd.DataFrame) -> bool:
         """필수 컬럼이 모두 있는지 확인"""
@@ -42,13 +43,19 @@ class ExcelProcessor:
             # 데이터 전처리
             self.df['생년월일'] = pd.to_datetime(self.df['생년월일'])
             
-            return True, "파일 검증 성공"
+            # 월 감지
+            months = self.df['생년월일'].dt.month.unique()
+            if len(months) > 1:
+                return False, "서로 다른 월의 생일자가 포함되어 있습니다."
+            
+            self.detected_month = int(months[0])
+            return True, f"{self.detected_month}월 데이터 검증 성공"
             
         except Exception as e:
             return False, f"파일 읽기 오류: {str(e)}"
     
-    def get_all_birthdays(self) -> List[Dict]:
-        """전체 생일자 목록 반환"""
+    def get_birthdays(self) -> List[Dict]:
+        """생일자 목록 반환"""
         if self.df is None:
             return []
         

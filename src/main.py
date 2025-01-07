@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 from excel_processor import ExcelProcessor
+from ppt_generator import PPTGenerator
 
 class BirthdayPPTApp(QMainWindow):
     def __init__(self):
@@ -107,6 +108,21 @@ class BirthdayPPTApp(QMainWindow):
         
         layout.addSpacing(20)
         
+        # 3. 감지된 월 표시
+        month_group = QWidget()
+        month_layout = QHBoxLayout()
+        month_group.setLayout(month_layout)
+        
+        month_layout.addWidget(QLabel('3. 감지된 월:'))
+        self.month_label = QLabel('파일을 선택하세요')
+        self.month_label.setStyleSheet('color: #888888; background-color: white; padding: 5px; border: 1px solid #cccccc; border-radius: 3px;')
+        month_layout.addWidget(self.month_label)
+        month_layout.addStretch()
+        layout.addWidget(month_group)
+        
+        layout.addSpacing(20)
+
+        
         # 진행 상태 바
         self.progress_bar = QProgressBar()
         self.progress_bar.setFixedHeight(30)
@@ -131,9 +147,21 @@ class BirthdayPPTApp(QMainWindow):
             "Excel Files (*.xlsx *.xls)"
         )
         if file_name:
+            excel_processor = ExcelProcessor()
+            success, message = excel_processor.read_excel(file_name)
+            
+            if not success:
+                QMessageBox.warning(self, '오류', message)
+                return
+                
             self.excel_path_label.setText(file_name)
             self.excel_path_label.setStyleSheet('color: #333333; background-color: white; padding: 5px; border: 1px solid #cccccc; border-radius: 3px;')
-            self.status_label.setText(f'엑셀 파일이 선택되었습니다: {file_name}')
+            
+            # 감지된 월 표시
+            self.month_label.setText(f"{excel_processor.detected_month}월")
+            self.month_label.setStyleSheet('color: #333333; background-color: white; padding: 5px; border: 1px solid #cccccc; border-radius: 3px;')
+            
+            self.status_label.setText(message)
             
     def select_save_path(self):
         folder_path = QFileDialog.getExistingDirectory(
@@ -167,8 +195,8 @@ class BirthdayPPTApp(QMainWindow):
             self.progress_bar.setValue(0)
             return
             
-        # 생일자 데이터 확인
-        birthday_list = excel_processor.get_all_birthdays()
+        # 생일자 목록 가져오기
+        birthday_list = excel_processor.get_birthdays()
         
         if not birthday_list:
             QMessageBox.information(self, '알림', '생일자 데이터가 없습니다.')
@@ -176,15 +204,29 @@ class BirthdayPPTApp(QMainWindow):
             self.progress_bar.setValue(0)
             return
             
-        # 생일자 목록 출력 (테스트용)
-        print(f"{selected_month}월 생일자 목록:")
-        for person in birthday_list:
-            print(f"이름: {person['이름']}, 성별: {person['성별']}, "
-                  f"생일: {person['생년월일']}, 나이: {person['나이']}")
+        # PPT 생성
+        self.status_label.setText('PPT 생성 중...')
+        self.progress_bar.setValue(50)
         
-        # PPT 생성 로직은 Sprint 2에서 구현
-        self.status_label.setText('PPT 생성 준비 완료')
-        self.progress_bar.setValue(100)
+        # PPT 생성
+        self.status_label.setText('PPT 생성 중...')
+        self.progress_bar.setValue(50)
+        
+        ppt_generator = PPTGenerator() 
+        success = ppt_generator.generate_ppt(
+            excel_processor.detected_month,
+            birthday_list,
+            self.save_path_label.text()
+        )
+        
+        if success:
+            self.status_label.setText('PPT 생성 완료')
+            self.progress_bar.setValue(100)
+            QMessageBox.information(self, '완료', 'PPT 파일이 생성되었습니다.')
+        else:
+            self.status_label.setText('PPT 생성 실패')
+            self.progress_bar.setValue(0)
+            QMessageBox.warning(self, '오류', 'PPT 생성 중 오류가 발생했습니다.')
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
