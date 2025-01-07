@@ -4,6 +4,7 @@ from typing import List, Dict, Tuple
 import os
 from pptx.enum.shapes import MSO_SHAPE_TYPE
 from io import BytesIO
+from pptx.util import Pt
 
 class PPTGeneratorError(Exception):
     pass
@@ -136,6 +137,7 @@ class PPTGenerator:
             raise PPTGeneratorError(f"슬라이드 생성 오류: {str(e)}")
         
     def create_title_slide(self, month: int) -> None:
+        """월별 타이틀 슬라이드 수정"""
         try:
             print(f"\n타이틀 슬라이드 수정 (월: {month})")
             title_slide = self.prs.slides[0]
@@ -144,15 +146,81 @@ class PPTGenerator:
             for shape in title_slide.shapes:
                 if shape.has_text_frame:
                     print(f"- {shape.text}")
-                    
+                        
             for shape in title_slide.shapes:
                 if shape.has_text_frame:
                     text_frame = shape.text_frame
-                    if "{month}" in text_frame.text:
-                        original_text = text_frame.text
-                        new_text = original_text.replace("{month}", str(month))
-                        text_frame.text = new_text
-                        print(f"텍스트 교체: {original_text} -> {new_text}")
+                    
+                    # 단락별로 처리
+                    for i, paragraph in enumerate(text_frame.paragraphs):
+                        # 원본 속성 저장
+                        original_font = None
+                        if len(paragraph.runs) > 0:
+                            original_font = paragraph.runs[0].font
+
+                        if "{month}" in paragraph.text:
+                            original_text = paragraph.text
+                            new_text = original_text.replace("{month}", str(month))
+                            
+                            # 텍스트 설정
+                            paragraph.text = new_text
+                            
+                            # 새로운 런에 원본 속성 적용
+                            if len(paragraph.runs) > 0 and original_font:
+                                new_run = paragraph.runs[0]
+                                new_font = new_run.font
+                                
+                                # 기본 폰트 설정
+                                new_font.name = "Maplestory OTF"
+                                
+                                # 크기 복사
+                                if original_font.size is not None:
+                                    new_font.size = original_font.size
+                                
+                                # 색상 복사
+                                try:
+                                    if hasattr(original_font.color, 'rgb'):
+                                        new_font.color.rgb = original_font.color.rgb
+                                    elif hasattr(original_font.color, 'theme_color'):
+                                        new_font.color.theme_color = original_font.color.theme_color
+                                except Exception as color_error:
+                                    print(f"타이틀 색상 복사 중 오류 (무시됨): {str(color_error)}")
+                                
+                                # 기타 속성 복사
+                                new_font.bold = original_font.bold
+                                new_font.italic = original_font.italic
+                                new_font.underline = original_font.underline
+                                
+                                print(f"타이틀 폰트 정보 - {new_text}:")
+                                print(f"- 이름: {new_font.name}")
+                                print(f"- 크기: {new_font.size}")
+                                if hasattr(new_font.color, 'theme_color'):
+                                    print(f"- 색상: Theme Color")
+                                elif hasattr(new_font.color, 'rgb'):
+                                    print(f"- 색상: RGB")
+                            
+                            print(f"텍스트 교체: {original_text} -> {new_text}")
+                        else:
+                            # month가 포함되지 않은 텍스트(HAPPY BIRTHDAY 등)도 폰트 적용
+                            if len(paragraph.runs) > 0:
+                                run = paragraph.runs[0]
+                                font = run.font
+                                font.name = "Maplestory OTF"
+                                
+                                if original_font:
+                                    # 원본 속성 복사
+                                    if original_font.size is not None:
+                                        font.size = original_font.size
+                                    try:
+                                        if hasattr(original_font.color, 'rgb'):
+                                            font.color.rgb = original_font.color.rgb
+                                        elif hasattr(original_font.color, 'theme_color'):
+                                            font.color.theme_color = original_font.color.theme_color
+                                    except Exception:
+                                        pass
+                                    font.bold = original_font.bold
+                                    font.italic = original_font.italic
+                                    font.underline = original_font.underline
 
         except Exception as e:
             print(f"타이틀 슬라이드 수정 중 오류: {str(e)}")
