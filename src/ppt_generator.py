@@ -96,37 +96,9 @@ class PPTGenerator:
                                         new_run = new_paragraph.runs[0]
                                         
                                         # 폰트 속성 복사
-                                        new_font = new_run.font
-                                        orig_font = orig_run.font
+                                        self._apply_font_format(orig_run.font, new_run.font)
                                         
-                                        # 기본 폰트 설정
-                                        new_font.name = self.font_name
-                                        
-                                        # 크기 복사
-                                        if orig_font.size is not None:
-                                            new_font.size = orig_font.size
-                                        
-                                        # 색상 복사 (테마 색상 처리)
-                                        try:
-                                            if hasattr(orig_font.color, 'rgb'):
-                                                new_font.color.rgb = orig_font.color.rgb
-                                            elif hasattr(orig_font.color, 'theme_color'):
-                                                new_font.color.theme_color = orig_font.color.theme_color
-                                        except Exception as color_error:
-                                            print(f"색상 복사 중 오류 (무시됨): {str(color_error)}")
-                                        
-                                        # 기타 폰트 속성 복사
-                                        new_font.bold = orig_font.bold
-                                        new_font.italic = orig_font.italic
-                                        new_font.underline = orig_font.underline
-                                        
-                                        print(f"폰트 정보 - {text}:")
-                                        print(f"- 이름: {new_font.name}")
-                                        print(f"- 크기: {new_font.size}")
-                                        if hasattr(new_font.color, 'theme_color'):
-                                            print(f"- 색상: Theme Color")
-                                        elif hasattr(new_font.color, 'rgb'):
-                                            print(f"- 색상: RGB")
+                                       
                             
             print(f"{person['이름']}의 슬라이드 생성 완료")
                             
@@ -166,37 +138,8 @@ class PPTGenerator:
                             # 새로운 런에 원본 속성 적용
                             if len(paragraph.runs) > 0 and original_font:
                                 new_run = paragraph.runs[0]
-                                new_font = new_run.font
                                 
-                                # 기본 폰트 설정
-                                # new_font.name = "Maplestory OTF"
-                                new_font.name = self.font_name
-                                
-                                # 크기 복사
-                                if original_font.size is not None:
-                                    new_font.size = original_font.size
-                                
-                                # 색상 복사
-                                try:
-                                    if hasattr(original_font.color, 'rgb'):
-                                        new_font.color.rgb = original_font.color.rgb
-                                    elif hasattr(original_font.color, 'theme_color'):
-                                        new_font.color.theme_color = original_font.color.theme_color
-                                except Exception as color_error:
-                                    print(f"타이틀 색상 복사 중 오류 (무시됨): {str(color_error)}")
-                                
-                                # 기타 속성 복사
-                                new_font.bold = original_font.bold
-                                new_font.italic = original_font.italic
-                                new_font.underline = original_font.underline
-                                
-                                print(f"타이틀 폰트 정보 - {new_text}:")
-                                print(f"- 이름: {new_font.name}")
-                                print(f"- 크기: {new_font.size}")
-                                if hasattr(new_font.color, 'theme_color'):
-                                    print(f"- 색상: Theme Color")
-                                elif hasattr(new_font.color, 'rgb'):
-                                    print(f"- 색상: RGB")
+                                self._apply_font_format(orig_run.font, new_run.font)
                             
                             print(f"텍스트 교체: {original_text} -> {new_text}")
                         else:
@@ -271,3 +214,52 @@ class PPTGenerator:
             missing_fields = required_fields - set(person.keys())
             if missing_fields:
                 raise PPTGeneratorError(f"필수 필드가 누락되었습니다: {', '.join(missing_fields)}")
+            
+    def _copy_font_color(self, orig_font, new_font):
+        """폰트 색상 복사 (투명도 포함)"""
+        try:
+            if hasattr(orig_font.color, 'rgb'):
+                # RGB 색상인 경우
+                rgb = orig_font.color.rgb
+                if rgb is not None:
+                    new_font.color.rgb = rgb
+                    print(f"RGB 색상 복사: {rgb}")
+            elif hasattr(orig_font.color, 'theme_color'):
+                # 테마 색상인 경우
+                theme_color = orig_font.color.theme_color
+                if theme_color is not None:
+                    new_font.color.theme_color = theme_color
+                    if hasattr(orig_font.color, 'brightness'):
+                        new_font.color.brightness = orig_font.color.brightness
+                    print(f"테마 색상 복사: {theme_color}")
+            
+            # 투명도 처리
+            if hasattr(orig_font.color, 'alpha'):
+                alpha = orig_font.color.alpha
+                if alpha is not None:
+                    new_font.color.alpha = alpha
+                    print(f"투명도 복사: {alpha}")
+        except Exception as e:
+            print(f"색상 복사 중 오류 (무시됨): {str(e)}")
+
+    def _apply_font_format(self, orig_font, new_font):
+        """모든 폰트 서식 적용"""
+        # 기본 폰트 설정
+        new_font.name = self.font_name
+        
+        # 크기 복사
+        if hasattr(orig_font, 'size') and orig_font.size is not None:
+            new_font.size = orig_font.size
+        
+        # 색상 및 투명도 복사
+        self._copy_font_color(orig_font, new_font)
+        
+        # 기타 서식 복사
+        new_font.bold = orig_font.bold
+        new_font.italic = orig_font.italic
+        new_font.underline = orig_font.underline
+        
+        print(f"폰트 정보:")
+        print(f"- 이름: {new_font.name}")
+        print(f"- 크기: {new_font.size}")
+        print(f"- 색상 정보: {new_font.color._element.xml if hasattr(new_font.color, '_element') else 'No color info'}")
