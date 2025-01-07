@@ -138,31 +138,15 @@ class PPTGenerator:
                             # 새로운 런에 원본 속성 적용
                             if len(paragraph.runs) > 0 and original_font:
                                 new_run = paragraph.runs[0]
-                                
-                                self._apply_font_format(orig_run.font, new_run.font)
-                            
-                            print(f"텍스트 교체: {original_text} -> {new_text}")
+                                # 모든 폰트 속성 복사
+                                self._apply_font_format(original_font, new_run.font)
+                                print(f"텍스트 교체: {original_text} -> {new_text}")
                         else:
                             # month가 포함되지 않은 텍스트(HAPPY BIRTHDAY 등)도 폰트 적용
                             if len(paragraph.runs) > 0:
                                 run = paragraph.runs[0]
-                                font = run.font
-                                font.name = "Maplestory OTF"
-                                
-                                if original_font:
-                                    # 원본 속성 복사
-                                    if original_font.size is not None:
-                                        font.size = original_font.size
-                                    try:
-                                        if hasattr(original_font.color, 'rgb'):
-                                            font.color.rgb = original_font.color.rgb
-                                        elif hasattr(original_font.color, 'theme_color'):
-                                            font.color.theme_color = original_font.color.theme_color
-                                    except Exception:
-                                        pass
-                                    font.bold = original_font.bold
-                                    font.italic = original_font.italic
-                                    font.underline = original_font.underline
+                                # 모든 폰트 속성 복사
+                                self._apply_font_format(original_font, run.font)
 
         except Exception as e:
             print(f"타이틀 슬라이드 수정 중 오류: {str(e)}")
