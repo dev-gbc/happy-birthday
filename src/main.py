@@ -15,6 +15,44 @@ class BirthdayPPTApp(QMainWindow):
         self.setWindowTitle('생일 PPT 생성기')
         self.setFixedSize(500, 400)
         
+        # 전체 앱 스타일 설정
+        self.setStyleSheet("""
+            QMainWindow {
+                background-color: #f0f0f0;
+            }
+            QWidget {
+                background-color: #f0f0f0;
+                color: #333333;
+            }
+            QPushButton {
+                background-color: #0078d4;
+                color: white;
+                border: none;
+                padding: 5px 15px;
+                border-radius: 3px;
+            }
+            QPushButton:hover {
+                background-color: #106ebe;
+            }
+            QPushButton:pressed {
+                background-color: #005a9e;
+            }
+            QComboBox {
+                background-color: white;
+                border: 1px solid #cccccc;
+                border-radius: 3px;
+                padding: 5px;
+            }
+            QProgressBar {
+                background-color: #e0e0e0;
+                border: 1px solid #cccccc;
+                border-radius: 3px;
+            }
+            QProgressBar::chunk {
+                background-color: #0078d4;
+            }
+        """)
+        
         # 메인 위젯 및 레이아웃 설정
         main_widget = QWidget()
         self.setCentralWidget(main_widget)
@@ -43,7 +81,7 @@ class BirthdayPPTApp(QMainWindow):
         excel_group.setLayout(excel_layout)
         
         self.excel_path_label = QLabel('선택된 파일 없음')
-        self.excel_path_label.setStyleSheet('color: gray')
+        self.excel_path_label.setStyleSheet('color: #888888; background-color: white; padding: 5px; border: 1px solid #cccccc; border-radius: 3px;')
         excel_button = QPushButton('엑셀 파일 선택')
         excel_button.clicked.connect(self.select_excel)
         excel_layout.addWidget(QLabel('1. 엑셀 파일:'))
@@ -70,7 +108,7 @@ class BirthdayPPTApp(QMainWindow):
         save_group.setLayout(save_layout)
         
         self.save_path_label = QLabel('선택된 경로 없음')
-        self.save_path_label.setStyleSheet('color: gray')
+        self.save_path_label.setStyleSheet('color: #888888; background-color: white; padding: 5px; border: 1px solid #cccccc; border-radius: 3px;')
         save_button = QPushButton('저장 위치 선택')
         save_button.clicked.connect(self.select_save_path)
         save_layout.addWidget(QLabel('3. 저장 위치:'))
@@ -106,7 +144,7 @@ class BirthdayPPTApp(QMainWindow):
         )
         if file_name:
             self.excel_path_label.setText(file_name)
-            self.excel_path_label.setStyleSheet('color: black')
+            self.excel_path_label.setStyleSheet('color: #333333; background-color: white; padding: 5px; border: 1px solid #cccccc; border-radius: 3px;')
             self.status_label.setText(f'엑셀 파일이 선택되었습니다: {file_name}')
             
     def select_save_path(self):
@@ -116,7 +154,7 @@ class BirthdayPPTApp(QMainWindow):
         )
         if folder_path:
             self.save_path_label.setText(folder_path)
-            self.save_path_label.setStyleSheet('color: black')
+            self.save_path_label.setStyleSheet('color: #333333; background-color: white; padding: 5px; border: 1px solid #cccccc; border-radius: 3px;')
             self.status_label.setText(f'저장 위치가 선택되었습니다: {folder_path}')
             
     def generate_ppt(self):
