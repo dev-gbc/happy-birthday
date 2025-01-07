@@ -208,12 +208,8 @@ class BirthdayPPTApp(QMainWindow):
         self.status_label.setText('PPT 생성 중...')
         self.progress_bar.setValue(50)
         
-        # PPT 생성
-        self.status_label.setText('PPT 생성 중...')
-        self.progress_bar.setValue(50)
-        
-        ppt_generator = PPTGenerator() 
-        success = ppt_generator.generate_ppt(
+        ppt_generator = PPTGenerator()
+        success, message = ppt_generator.generate_ppt(
             excel_processor.detected_month,
             birthday_list,
             self.save_path_label.text()
@@ -222,11 +218,11 @@ class BirthdayPPTApp(QMainWindow):
         if success:
             self.status_label.setText('PPT 생성 완료')
             self.progress_bar.setValue(100)
-            QMessageBox.information(self, '완료', 'PPT 파일이 생성되었습니다.')
+            QMessageBox.information(self, '완료', message)
         else:
             self.status_label.setText('PPT 생성 실패')
             self.progress_bar.setValue(0)
-            QMessageBox.warning(self, '오류', 'PPT 생성 중 오류가 발생했습니다.')
+            QMessageBox.warning(self, '오류', message)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
