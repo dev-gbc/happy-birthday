@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                            QHBoxLayout, QLabel, QPushButton, QFileDialog, 
                            QProgressBar, QMessageBox)
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont
 from excel_processor import ExcelProcessor
 from ppt_generator import PPTGenerator
 
@@ -20,12 +21,11 @@ class BirthdayPPTApp(QMainWindow):
         self.setWindowTitle('생일 PPT 생성기')
         self.setFixedSize(500, 400)
         
-        # 전체 앱 스타일 통합
+        # 스타일 설정
         self.setStyleSheet("""
         QMainWindow, QWidget {
-            background-color: #FFFFFF;  /* 완전한 흰색으로 변경 */
+            background-color: #FFFFFF;
             font-family: Pretendard;
-            color: #1F2937;
         }
         
         QPushButton {
@@ -47,23 +47,6 @@ class BirthdayPPTApp(QMainWindow):
             background-color: #1E40AF;
         }
         
-        QPushButton#generateButton {
-            padding: 12px;
-            font-weight: bold;
-            font-size: 14px;
-        }
-        
-        QLabel {
-            color: #374151;
-        }
-        
-        QLabel.title {
-            font-size: 20px;
-            font-weight: bold;
-            color: #000000;  /* 완전한 검정색으로 변경 */
-            margin: 20px 0;
-        }
-        
         QLabel.path-label {
             background-color: #F3F4F6;
             border: 1px solid #E5E7EB;
@@ -72,14 +55,9 @@ class BirthdayPPTApp(QMainWindow):
             color: #6B7280;
         }
         
-        QLabel.path-label[selected="true"] {
-            background-color: white;
-            color: #374151;
-        }
-        
         QLabel.section-label {
-            font-weight: 500;
             color: #374151;
+            font-weight: 500;
             min-width: 100px;
         }
         
@@ -95,17 +73,6 @@ class BirthdayPPTApp(QMainWindow):
             background-color: #2563EB;
             border-radius: 4px;
         }
-        
-        QLabel#statusLabel {
-            color: #6B7280;
-            font-size: 13px;
-        }
-        
-        QLabel#divider {
-            background-color: #E5E7EB;
-            min-height: 1px;
-            max-height: 1px;
-        }
         """)
         
         # 메인 위젯 및 레이아웃 설정
@@ -118,13 +85,15 @@ class BirthdayPPTApp(QMainWindow):
         
         # 제목
         title_label = QLabel('생일 PPT 생성기')
+        title_font = QFont("Pretendard", 17, QFont.Weight.Bold)
+        title_label.setFont(title_font)
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        title_label.setProperty('class', 'title')
+        title_label.setStyleSheet("color: #111827; margin: 0px 0;")
         layout.addWidget(title_label)
         
         # 구분선
         line = QLabel()
-        line.setObjectName('divider')
+        line.setStyleSheet("background-color: #E5E7EB; min-height: 1px; max-height: 1px;")
         layout.addWidget(line)
         layout.addSpacing(16)
         
@@ -196,14 +165,19 @@ class BirthdayPPTApp(QMainWindow):
         
         # 생성 버튼
         generate_button = QPushButton('PPT 생성하기')
-        generate_button.setObjectName('generateButton')
         generate_button.setFixedHeight(50)
+        generate_button.setStyleSheet("""
+            QPushButton {
+                font-size: 14px;
+                font-weight: bold;
+            }
+        """)
         generate_button.clicked.connect(self.generate_ppt)
         layout.addWidget(generate_button)
         
         # 상태 메시지
         self.status_label = QLabel('파일을 선택해주세요')
-        self.status_label.setObjectName('statusLabel')
+        self.status_label.setStyleSheet("color: #6B7280; font-size: 13px;")
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.status_label)
 
@@ -223,15 +197,23 @@ class BirthdayPPTApp(QMainWindow):
                 return
             
             self.excel_path_label.setText(file_name)
-            self.excel_path_label.setProperty('selected', True)
-            self.excel_path_label.style().unpolish(self.excel_path_label)
-            self.excel_path_label.style().polish(self.excel_path_label)
+            self.excel_path_label.setStyleSheet("""
+                background-color: white;
+                border: 1px solid #2563EB;
+                border-radius: 6px;
+                padding: 8px;
+                color: #374151;
+            """)
             
             # 감지된 월 표시
             self.month_label.setText(f"{excel_processor.detected_month}월")
-            self.month_label.setProperty('selected', True)
-            self.month_label.style().unpolish(self.month_label)
-            self.month_label.style().polish(self.month_label)
+            self.month_label.setStyleSheet("""
+                background-color: white;
+                border: 1px solid #2563EB;
+                border-radius: 6px;
+                padding: 8px;
+                color: #374151;
+            """)
             
             self.status_label.setText(message)
             
@@ -242,13 +224,16 @@ class BirthdayPPTApp(QMainWindow):
         )
         if folder_path:
             self.save_path_label.setText(folder_path)
-            self.save_path_label.setProperty('selected', True)
-            self.save_path_label.style().unpolish(self.save_path_label)
-            self.save_path_label.style().polish(self.save_path_label)
+            self.save_path_label.setStyleSheet("""
+                background-color: white;
+                border: 1px solid #2563EB;
+                border-radius: 6px;
+                padding: 8px;
+                color: #374151;
+            """)
             self.status_label.setText(f'저장 위치가 선택되었습니다: {folder_path}')
             
     def generate_ppt(self):
-        # 입력 검증
         if self.excel_path_label.text() == '선택된 파일 없음':
             QMessageBox.warning(self, '경고', '엑셀 파일을 선택해주세요.')
             return
@@ -282,7 +267,7 @@ class BirthdayPPTApp(QMainWindow):
         self.status_label.setText('PPT 생성 중...')
         self.progress_bar.setValue(50)
         
-        ppt_generator = PPTGenerator(font_name="Pretendard")  # 폰트 변경
+        ppt_generator = PPTGenerator(font_name="Pretendard")
         success, message = ppt_generator.generate_ppt(
             excel_processor.detected_month,
             birthday_list,
